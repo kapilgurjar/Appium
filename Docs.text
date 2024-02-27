@@ -1,0 +1,11 @@
+1.Appium server // npm install appium 
+2.Appium inspector// download from google
+3.UIAutomator driver// npm command line
+4.Xcuitest driver // npm command line
+5.Node js need to download from google on ur system
+6.Npm 
+7.Android sdk download and go to tools section in app and go to sdk manager 
+click on hide obselate package
+8.Set andorid_Home path and Android sdk path 
+ANDROID_HOME: C:\Users\Kapil\AppData\Local\Android\Sdk
+ANDROID_SDK_ROOT: C:\Users\Kapil\AppData\Local\Android\Sdk\tools\bin 
