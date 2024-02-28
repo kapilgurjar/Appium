@@ -2,16 +2,20 @@
 <testng-results ignored="0" total="1" passed="1" failed="0" skipped="0">
   <reporter-output>
   </reporter-output>
-  <suite started-at="2024-02-27T18:13:03 IST" name="Default suite" finished-at="2024-02-27T18:13:17 IST" duration-ms="14220">
+  <suite started-at="2024-02-28T13:01:45 IST" name="Default suite" finished-at="2024-02-28T13:02:30 IST" duration-ms="45608">
     <groups>
     </groups>
-    <test started-at="2024-02-27T18:13:03 IST" name="Default test" finished-at="2024-02-27T18:13:17 IST" duration-ms="14220">
-      <class name="testScripts.FirstTest">
-        <test-method signature="TC01_LaunchApp()[pri:0, instance:testScripts.FirstTest@46fa7c39]" started-at="2024-02-27T18:13:03 IST" name="TC01_LaunchApp" finished-at="2024-02-27T18:13:17 IST" duration-ms="14146" status="PASS">
+    <test started-at="2024-02-28T13:01:45 IST" name="Default test" finished-at="2024-02-28T13:02:30 IST" duration-ms="45608">
+      <class name="testScripts.DropDown">
+        <test-method is-config="true" signature="setUp()[pri:0, instance:testScripts.DropDown@44a7bfbc]" started-at="2024-02-28T13:01:45 IST" name="setUp" finished-at="2024-02-28T13:01:53 IST" duration-ms="8229" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC01_LaunchApp -->
-      </class> <!-- testScripts.FirstTest -->
+        </test-method> <!-- setUp -->
+        <test-method signature="test01()[pri:0, instance:testScripts.DropDown@44a7bfbc]" started-at="2024-02-28T13:01:53 IST" name="test01" finished-at="2024-02-28T13:02:30 IST" duration-ms="37349" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- test01 -->
+      </class> <!-- testScripts.DropDown -->
     </test> <!-- Default test -->
   </suite> <!-- Default suite -->
 </testng-results>
