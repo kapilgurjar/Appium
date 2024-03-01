@@ -2,16 +2,16 @@
 <testng-results ignored="0" total="1" passed="1" failed="0" skipped="0">
   <reporter-output>
   </reporter-output>
-  <suite started-at="2024-02-28T13:01:45 IST" name="Default suite" finished-at="2024-02-28T13:02:30 IST" duration-ms="45608">
+  <suite started-at="2024-03-01T19:18:22 IST" name="Default suite" finished-at="2024-03-01T19:19:06 IST" duration-ms="44407">
     <groups>
     </groups>
-    <test started-at="2024-02-28T13:01:45 IST" name="Default test" finished-at="2024-02-28T13:02:30 IST" duration-ms="45608">
+    <test started-at="2024-03-01T19:18:22 IST" name="Default test" finished-at="2024-03-01T19:19:06 IST" duration-ms="44407">
       <class name="testScripts.DropDown">
-        <test-method is-config="true" signature="setUp()[pri:0, instance:testScripts.DropDown@44a7bfbc]" started-at="2024-02-28T13:01:45 IST" name="setUp" finished-at="2024-02-28T13:01:53 IST" duration-ms="8229" status="PASS">
+        <test-method is-config="true" signature="setUp()[pri:0, instance:testScripts.DropDown@44a7bfbc]" started-at="2024-03-01T19:18:22 IST" name="setUp" finished-at="2024-03-01T19:18:29 IST" duration-ms="7328" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- setUp -->
-        <test-method signature="test01()[pri:0, instance:testScripts.DropDown@44a7bfbc]" started-at="2024-02-28T13:01:53 IST" name="test01" finished-at="2024-02-28T13:02:30 IST" duration-ms="37349" status="PASS">
+        <test-method signature="test01()[pri:0, instance:testScripts.DropDown@44a7bfbc]" started-at="2024-03-01T19:18:29 IST" name="test01" finished-at="2024-03-01T19:19:06 IST" duration-ms="37050" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- test01 -->
