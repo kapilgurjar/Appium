@@ -1,0 +1,58 @@
+package com.qa.livebarn.utils;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
+public final class DataProviderUtils {
+
+	/**
+	 * Private constructor to avoid external instantiation
+	 */
+	private DataProviderUtils() {
+	}
+
+	private static List<Map<String, String>> loginList = new ArrayList<>();
+	private static List<Map<String, String>> userProfileList = new ArrayList<>();
+
+	@DataProvider(parallel = false)
+	public static Object[] getLoginData(Method m) {
+		// String testname = m.getName();
+		if (loginList.isEmpty()) {
+			loginList = ExcelUtilis2.getTestDetails("LOGIN");
+
+			// System.out.println(list);
+		}
+
+		List<Map<String, String>> smalllist = new ArrayList<>(loginList);
+		System.out.println("small list value is " + smalllist);
+
+		System.out.println("Small list value is " + smalllist);
+
+		return smalllist.toArray(new Object[0]);
+
+	}
+
+	@DataProvider(parallel = false)
+	public static Object[] getUserProfileData(Method m) {
+		// String testname = m.getName();
+
+		if (userProfileList.isEmpty()) {
+			userProfileList = ExcelUtilis2.getTestDetails("USERPROFILE");
+
+			// System.out.println(list);
+		}
+
+		List<Map<String, String>> smalllist = new ArrayList<>(userProfileList);
+		System.out.println("small list value is " + smalllist);
+
+		System.out.println("Small list value is " + smalllist);
+
+		return smalllist.toArray(new Object[0]);
+
+	}
+
+}
