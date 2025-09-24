@@ -1,0 +1,758 @@
+package com.qa.livebarn.utils;
+
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+
+import javax.imageio.ImageIO;
+
+import org.openqa.selenium.Alert;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
+import org.openqa.selenium.ElementClickInterceptedException;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.NoAlertPresentException;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.Point;
+import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.interactions.Pause;
+import org.openqa.selenium.interactions.PointerInput;
+import org.openqa.selenium.interactions.Sequence;
+import org.openqa.selenium.remote.RemoteWebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import com.qa.livebarn.constants.MobileConstants;
+import com.qa.livebarn.factory.DriverFactoryMobile;
+import io.appium.java_client.AppiumBy;
+import io.appium.java_client.AppiumDriver;
+import io.qameta.allure.Step;
+
+public class MobileElementUtil {
+	private AppiumDriver driver;
+
+	public MobileElementUtil(AppiumDriver driver) {
+		this.driver = driver;
+
+	}
+
+	public WebElement getElement(By locator) {
+
+		WebElement ele = driver.findElement(locator);
+		return ele;
+	}
+
+	public void doClick(By locator) {
+		waitForVisibility(locator);
+		getElement(locator).click();
+		// FrameworkLogger.info("Clicked on element: " + locator);
+	}
+
+	public void doClickAccessibilityId(String text) {
+		By id = AppiumBy.accessibilityId("" + text + "");
+		System.out.println("--------id " + id);
+		retryingElement(id, 10);
+		getElement(id).click();
+	}
+
+	public void doSendKeys(By locator, String value) {
+		// waitForVisibility(locator);
+		getElement(locator).sendKeys(value);
+		// FrameworkLogger.info("Entered value: " + value + " into element: " +
+		// locator);
+	}
+
+	public void doClear(By locator, int timeOut) {
+		waitForElementFound(locator, timeOut);
+		getElement(locator).clear();
+		// FrameworkLogger.info("Cleared the value of element: " + locator);
+	}
+
+	public String doGetAttribute(By locator, String attrName, int timeOut) {
+		waitForElementFound(locator, timeOut);
+		return retryingElement(locator, timeOut).getDomAttribute(attrName);
+	}
+
+	public void clickWhenReady(By locator) {
+		// FrameworkLogger.info("Waiting for element to be clickable: " + locator);
+		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(MobileConstants.getTimeOut()));
+		wait.until(ExpectedConditions.elementToBeClickable(locator)).click();
+		// FrameworkLogger.info("Clicked on element: " + locator);
+
+	}
+
+	public void sleep(long timeOut) {
+		try {
+			Thread.sleep(timeOut);
+			// FrameworkLogger.info("Woke up after {} milliseconds",
+			// String.valueOf(timeOut));
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void clickWithRetry(By locator, long timeOut) {
+		WebElement ele = getElement(locator);
+		try {
+
+			WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+			wait.until(ExpectedConditions.visibilityOf(ele));
+			wait.until(ExpectedConditions.elementToBeClickable(ele));
+			ele.click();
+		} catch (ElementClickInterceptedException exception) {
+			// FrameworkLogger.info("Warning :: element was not clicked " +
+			// exception.getMessage());
+			for (long i = 0; i < timeOut; i++) {
+				try {
+					sleep(1);
+					ele.click();
+					break;
+				} catch (ElementClickInterceptedException exception1) {
+					// FrameworkLogger.info("Warning :: " + exception1.getMessage() + " Try " + i);
+				}
+			}
+		}
+	}
+
+	public WebElement retryingElement(By locator, int timeOut) {
+
+		WebElement element = null;
+
+		int attempts = 0;
+
+		while (attempts < timeOut) {
+
+			try {
+				element = getElement(locator);
+				// FrameworkLogger.info("element is found in attempt: " + attempts);
+				break;
+			} catch (Exception e) {
+				// FrameworkLogger.info("element is not found in attempt : " + attempts + " : "
+				// + " for " + locator);
+
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
+				}
+			}
+			attempts++;
+
+		}
+
+		if (element == null) {
+			try {
+				throw new Exception("ELEMENTNOTFOUNDEXCEPTION");
+			} catch (Exception e) {
+				// FrameworkLogger.info("element is not found com.livebarn.exception ...tried
+				// for : " + timeOut + " secs"
+				// + " with the interval of : " + 500 + " ms");
+
+			}
+
+		}
+
+		return element;
+
+	}
+
+	public static void log(String message) {
+		System.out.println(message);
+	}
+
+	public Alert waitForAlert(int timeOut) {
+		// FrameworkLogger.info("Waiting for alert to be present for up to {} seconds",
+		// String.valueOf(timeOut));
+		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
+		return wait.until(ExpectedConditions.alertIsPresent());
+	}
+
+	public String getAlertText(int timeOut) {
+		return waitForAlert(timeOut).getText();
+	}
+
+	public void acceptAlert(int timeOut) {
+		waitForAlert(timeOut).accept();
+	}
+
+	public void dismissAlert(int timeOut) {
+		waitForAlert(timeOut).dismiss();
+	}
+
+	public Alert getAlert() throws Exception {
+		// test.log(LogStatus.INFO, "Switch Control To Alert");
+		return driver.switchTo().alert();
+	}
+
+	public void AcceptAlert() throws Exception {
+		// test.log(LogStatus.INFO, "Alert Accepted");
+		getAlert().accept();
+	}
+
+	public void DismissAlert() throws Exception {
+		// test.log(LogStatus.INFO, "Alert Dismissed");
+		getAlert().dismiss();
+	}
+
+	public String getAlertText() throws Exception {
+		String text = getAlert().getText();
+		// test.log(LogStatus.INFO, text);
+		return text;
+	}
+
+	public boolean isAlertPresent() {
+		try {
+			driver.switchTo().alert();
+			System.out.println("true");
+			return true;
+		} catch (NoAlertPresentException e) {
+			System.out.println("false");
+			return false;
+		}
+	}
+
+	public void AcceptAlertIfPresent() {
+		if (!isAlertPresent())
+			return;
+		try {
+			AcceptAlert();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println("AcceptAlert");
+	}
+
+	public void DismissAlertIfPresent() throws Exception {
+
+		if (!isAlertPresent())
+			return;
+		DismissAlert();
+		System.out.println("DismissAlert");
+	}
+
+	// waits
+
+	public List<WebElement> waitForElementFound(By locator, int timeOut) {
+		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
+		return wait.until(ExpectedConditions.numberOfElementsToBeMoreThan(locator, 0));
+
+	}
+
+	public WebElement waitForElementPresenceWithWait(By locator, int timeOut, int pollingTime) {
+		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
+		wait.pollingEvery(Duration.ofSeconds(pollingTime)).ignoring(NoSuchElementException.class)
+				.ignoring(StaleElementReferenceException.class)
+				.withMessage(locator + " is not found within the given time......");
+
+		return wait.until(ExpectedConditions.presenceOfElementLocated(locator));
+
+	}
+
+	public Boolean waitForAttribute(By locator, String atrribute, String value) {
+
+		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(180));
+		return wait.until(ExpectedConditions.attributeToBe(locator, atrribute, value));
+
+	}
+
+	public Boolean waitForInvisbility(By locator) {
+		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(300));
+		return wait.until(ExpectedConditions.invisibilityOf(getElement(locator)));
+	}
+
+	public void waitForVisibility(By loactor) {
+		WebDriverWait wait = new WebDriverWait(DriverFactoryMobile.getDriver(), Duration.ofSeconds(60));
+		wait.until(ExpectedConditions.visibilityOf(getElement(loactor)));
+	}
+
+	public void getResponseTime(By locator) {
+
+		long start;
+		start = System.currentTimeMillis();
+		WebDriverWait wait = new WebDriverWait(DriverFactoryMobile.getDriver(), Duration.ofSeconds(300));
+		wait.until(ExpectedConditions.invisibilityOf(getElement(locator)));
+		System.out.println("time is equal to " + (System.currentTimeMillis() - start));
+
+	}
+
+	public String waitForUrlContains(String urlFraction, int timeOut) {
+		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
+
+		try {
+			if (wait.until(ExpectedConditions.urlContains(urlFraction))) {
+				return driver.getCurrentUrl();
+			}
+		} catch (Exception e) {
+			return null;
+
+		}
+		return null;
+	}
+
+	/**
+	 * An expectation for checking that an element is present on the DOM of a page
+	 * and visible. Visibility means that the element is not only displayed but also
+	 * has a height and width that is greater than 0.
+	 * 
+	 * @param locator
+	 * @param timeOut
+	 * @return
+	 */
+	public WebElement waitForElementVisible(By locator, int timeOut) {
+		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeOut));
+		return wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
+	}
+
+	/**
+	 * An expectation for checking an element isClickable or not
+	 * 
+	 * @Author Kapil
+	 * @param locator
+	 * @param timeOut
+	 */
+	public boolean ISclickable(By locator) {
+		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(MobileConstants.getTimeOut()));
+		try {
+			wait.until(ExpectedConditions.elementToBeClickable(locator));
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+
+	}
+
+	public List<WebElement> getElements(By locator) {
+		waitForElementPresenceWithWait(locator, MobileConstants.getTimeOut(), MobileConstants.getTimeOut());
+		return driver.findElements(locator);
+	}
+
+	/**
+	 * This method will click element 's link text
+	 * 
+	 * @Author Kapil
+	 * @param locator
+	 * @param attrName
+	 * @return
+	 */
+	public void clickOnLink(By locator, String linkText) {
+		List<WebElement> langList = getElements(locator);
+		System.out.println(langList.size());
+		for (WebElement e : langList) {
+			String text = e.getText();
+			System.out.println(text);
+			if (text.contains(linkText)) {
+				e.click();
+				break;
+			}
+		}
+	}
+
+	/**
+	 * This method will click element 's Attribute text
+	 * 
+	 * @Author Kapil
+	 * @param locator
+	 * @param attrName
+	 */
+	@Step("Click on element 's Attribute text...")
+	public void clickOnAtributes(By locator, String atrributes, String attrValue) {
+		List<WebElement> langList = getElements(locator);
+		System.out.println(langList.size());
+		for (WebElement e : langList) {
+			String text = e.getDomAttribute(atrributes);
+			// e.getDomAttribute(atrributes);
+			if (text.contains(attrValue)) {
+				e.click();
+				break;
+			}
+		}
+	}
+
+	@Step("element is displayed..")
+	public boolean isDisplayed(By locator) {
+		// waitForElementFound(locator, 30);
+		try {
+
+			// retryingElement(locator, 30).isDisplayed();
+			getElement(locator).isDisplayed();
+			// FrameworkLogger.info("element is displayed.." + locator);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	public String GetColour(By locator) throws IOException {
+
+		waitForElementFound(locator, 30);
+		WebElement ele = getElement(locator);
+
+		File screenshot = ele.getScreenshotAs(OutputType.FILE);
+		BufferedImage img = ImageIO.read(screenshot);
+
+		// Analyze the screenshot to get the background color (get color of center
+		// pixel)
+		int centerX = img.getWidth() / 2;
+		int centerY = img.getHeight() / 2;
+		int rgb = img.getRGB(centerX, centerY);
+		// Color color = new Color(rgb);
+		// FrameworkLogger.info("Background color: " + color);
+		// Extract RGB values
+		int red = (rgb >> 16) & 0xFF;
+		int green = (rgb >> 8) & 0xFF;
+		int blue = rgb & 0xFF;
+
+		// Convert RGB to hex
+		String hexColor = String.format("#%02X%02X%02X", red, green, blue);
+
+		// FrameworkLogger.info("Background color code: " + hexColor);
+		return hexColor;
+	}
+
+	public List<String> getAllColour(By locator) throws IOException {
+		waitForElementFound(locator, 30);
+		List<String> eleColour = new ArrayList<>();
+		List<WebElement> eles = getElements(locator);
+		for (WebElement ele : eles) {
+			File screenshot = ele.getScreenshotAs(OutputType.FILE);
+			BufferedImage img = ImageIO.read(screenshot);
+
+			// Analyze the screenshot to get the background color (get color of center
+			// pixel)
+			int centerX = img.getWidth() / 2;
+			int centerY = img.getHeight() / 2;
+			int rgb = img.getRGB(centerX, centerY);
+			// Color color = new Color(rgb);
+			// FrameworkLogger.info("Background color: " + color);
+			// Extract RGB values
+			int red = (rgb >> 16) & 0xFF;
+			int green = (rgb >> 8) & 0xFF;
+			int blue = rgb & 0xFF;
+
+			// Convert RGB to hex
+			String hexColor = String.format("#%02X%02X%02X", red, green, blue);
+
+			// FrameworkLogger.info("Background color code: " + hexColor);
+			eleColour.add(hexColor);
+
+		}
+		return eleColour;
+	}
+
+	public String getTextAttributeUsingAccessibilityID(String text) {
+		By id = AppiumBy.accessibilityId("" + text + "");
+		// System.out.println("--------id " + id);
+		return doGetAttribute(id, "name", MobileConstants.getTimeOut());
+	}
+
+	public void pickerWheel1(By locators, String text) {
+
+		boolean flag = false;
+		while (!flag) {
+			WebElement redPickerWheel = getElement(locators);
+			Map<String, Object> params = new HashMap<>();
+			params.put("order", "next");
+			params.put("offset", 0.15);
+			params.put("element", ((RemoteWebElement) redPickerWheel).getId());
+			driver.executeScript("mobile: selectPickerWheelValue", params);
+			if (redPickerWheel.getText().equals(text)) {
+				flag = true;
+			}
+		}
+	}
+
+	public void pickerWheel(By locators, String text) {
+		WebElement redPickerWheel = getElement(locators);
+
+		if (redPickerWheel.getText().equals(text)) {
+			redPickerWheel.click();
+			ElementUtil.sleep(2000);
+
+			return;
+		}
+
+		boolean flag = false;
+		while (!flag) {
+			Map<String, Object> params = new HashMap<>();
+			params.put("order", "next");
+			params.put("offset", 0.15);
+			params.put("element", ((RemoteWebElement) redPickerWheel).getId());
+			driver.executeScript("mobile: selectPickerWheelValue", params);
+
+			// Re-fetch element to check updated text
+			redPickerWheel = getElement(locators);
+			if (redPickerWheel.getText().equals(text)) {
+				flag = true;
+			}
+		}
+	}
+
+	private Point getCenterOfElement(Point location, Dimension size) {
+		return new Point(location.getX() + size.getWidth() / 2, location.getY() + size.getHeight() / 2);
+	}
+
+	public void Zoom(By locator) {
+
+		Point centerOfElement = getCenterOfElement(getElement(locator).getLocation(), getElement(locator).getSize());
+		PointerInput finger1 = new PointerInput(PointerInput.Kind.TOUCH, "finger1");
+		PointerInput finger2 = new PointerInput(PointerInput.Kind.TOUCH, "finger2");
+		Sequence sequence = new Sequence(finger1, 1)
+				.addAction(finger1.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), centerOfElement))
+				.addAction(finger1.createPointerDown(PointerInput.MouseButton.LEFT.asArg()))
+				.addAction(new Pause(finger1, Duration.ofMillis(200)))
+				.addAction(finger1.createPointerMove(Duration.ofMillis(200), PointerInput.Origin.viewport(),
+						centerOfElement.getX() + 100, centerOfElement.getY() - 100))
+				.addAction(finger1.createPointerUp(PointerInput.MouseButton.LEFT.asArg()));
+
+		Sequence sequence2 = new Sequence(finger2, 1)
+				.addAction(finger2.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), centerOfElement))
+				.addAction(finger2.createPointerDown(PointerInput.MouseButton.LEFT.asArg()))
+				.addAction(new Pause(finger2, Duration.ofMillis(200)))
+				.addAction(finger2.createPointerMove(Duration.ofMillis(200), PointerInput.Origin.viewport(),
+						centerOfElement.getX() - 300, centerOfElement.getY() + 300))
+				.addAction(finger2.createPointerUp(PointerInput.MouseButton.LEFT.asArg()));
+
+		DriverFactoryMobile.getDriver().perform(Arrays.asList(sequence, sequence2));
+
+	}
+
+	public void zoomIn() {
+		try {
+			// Get screen size
+			int screenWidth = DriverFactoryMobile.getDriver().manage().window().getSize().getWidth();
+			int screenHeight = DriverFactoryMobile.getDriver().manage().window().getSize().getHeight();
+
+			// Log screen size
+			System.out.println("Screen Width: " + screenWidth + ", Screen Height: " + screenHeight);
+
+			int startX1 = screenWidth / 2;
+			int startY1 = screenHeight / 2;
+
+			int startX2 = screenWidth / 2;
+			int startY2 = screenHeight / 2;
+
+			int endX1 = startX1 - (screenWidth / 6); // Move left
+			int endY1 = startY1 - (screenHeight / 6); // Move up
+
+			int endX2 = startX2 + (screenWidth / 6); // Move right
+			int endY2 = startY2 + (screenHeight / 6); // Move down
+
+			// Log coordinates
+			System.out
+					.println("Finger 1: Start (" + startX1 + ", " + startY1 + ") → End (" + endX1 + ", " + endY1 + ")");
+			System.out
+					.println("Finger 2: Start (" + startX2 + ", " + startY2 + ") → End (" + endX2 + ", " + endY2 + ")");
+
+			PointerInput finger1 = new PointerInput(PointerInput.Kind.TOUCH, "finger1");
+			PointerInput finger2 = new PointerInput(PointerInput.Kind.TOUCH, "finger2");
+
+			Sequence sequence1 = new Sequence(finger1, 1)
+					.addAction(
+							finger1.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), startX1, startY1))
+					.addAction(finger1.createPointerDown(PointerInput.MouseButton.LEFT.asArg()))
+					.addAction(new Pause(finger1, Duration.ofMillis(300))) // Pause for better recognition
+					.addAction(finger1.createPointerMove(Duration.ofMillis(500), PointerInput.Origin.viewport(), endX1,
+							endY1))
+					.addAction(finger1.createPointerUp(PointerInput.MouseButton.LEFT.asArg()));
+
+			Sequence sequence2 = new Sequence(finger2, 1)
+					.addAction(
+							finger2.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), startX2, startY2))
+					.addAction(finger2.createPointerDown(PointerInput.MouseButton.LEFT.asArg()))
+					.addAction(new Pause(finger2, Duration.ofMillis(300))) // Pause for better recognition
+					.addAction(finger2.createPointerMove(Duration.ofMillis(500), PointerInput.Origin.viewport(), endX2,
+							endY2))
+					.addAction(finger2.createPointerUp(PointerInput.MouseButton.LEFT.asArg()));
+
+			// Perform the gesture
+			DriverFactoryMobile.getDriver().perform(Arrays.asList(sequence1, sequence2));
+
+			System.out.println("Zoom-In gesture performed successfully.");
+		} catch (Exception e) {
+			System.err.println("Zoom-In failed: " + e.getMessage());
+		}
+	}
+
+	public void zoomOut() {
+		try {
+			// Get screen size
+			int screenWidth = DriverFactoryMobile.getDriver().manage().window().getSize().getWidth();
+			int screenHeight = DriverFactoryMobile.getDriver().manage().window().getSize().getHeight();
+
+			// Log screen size
+			System.out.println("Screen Width: " + screenWidth + ", Screen Height: " + screenHeight);
+
+			// Define initial touch positions (far apart)
+			int startX1 = screenWidth / 2 - (screenWidth / 6); // Left
+			int startY1 = screenHeight / 2 - (screenHeight / 6); // Up
+
+			int startX2 = screenWidth / 2 + (screenWidth / 6); // Right
+			int startY2 = screenHeight / 2 + (screenHeight / 6); // Down
+
+			// Define touch end positions (closer to center)
+			int endX1 = screenWidth / 2;
+			int endY1 = screenHeight / 2;
+
+			int endX2 = screenWidth / 2;
+			int endY2 = screenHeight / 2;
+
+			// Log coordinates
+			System.out
+					.println("Finger 1: Start (" + startX1 + ", " + startY1 + ") → End (" + endX1 + ", " + endY1 + ")");
+			System.out
+					.println("Finger 2: Start (" + startX2 + ", " + startY2 + ") → End (" + endX2 + ", " + endY2 + ")");
+
+			PointerInput finger1 = new PointerInput(PointerInput.Kind.TOUCH, "finger1");
+			PointerInput finger2 = new PointerInput(PointerInput.Kind.TOUCH, "finger2");
+
+			Sequence sequence1 = new Sequence(finger1, 1)
+					.addAction(
+							finger1.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), startX1, startY1))
+					.addAction(finger1.createPointerDown(PointerInput.MouseButton.LEFT.asArg()))
+					.addAction(new Pause(finger1, Duration.ofMillis(300))) // Pause for better recognition
+					.addAction(finger1.createPointerMove(Duration.ofMillis(500), PointerInput.Origin.viewport(), endX1,
+							endY1))
+					.addAction(finger1.createPointerUp(PointerInput.MouseButton.LEFT.asArg()));
+
+			Sequence sequence2 = new Sequence(finger2, 1)
+					.addAction(
+							finger2.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), startX2, startY2))
+					.addAction(finger2.createPointerDown(PointerInput.MouseButton.LEFT.asArg()))
+					.addAction(new Pause(finger2, Duration.ofMillis(300))) // Pause for better recognition
+					.addAction(finger2.createPointerMove(Duration.ofMillis(500), PointerInput.Origin.viewport(), endX2,
+							endY2))
+					.addAction(finger2.createPointerUp(PointerInput.MouseButton.LEFT.asArg()));
+
+			// Perform the gesture
+			DriverFactoryMobile.getDriver().perform(Arrays.asList(sequence1, sequence2));
+
+			System.out.println("Zoom-Out gesture performed successfully.");
+		} catch (Exception e) {
+			System.err.println("Zoom-Out failed: " + e.getMessage());
+		}
+
+	}
+
+	public void swipeToDirection_iOS_XCTest(By loactor, String direction) {
+
+		WebElement el = getElement(loactor);
+
+		JavascriptExecutor js = (JavascriptExecutor) driver;
+		HashMap<String, String> swipeObject = new HashMap<String, String>();
+		if (direction.equals("d")) {
+			swipeObject.put("direction", "down");
+		} else if (direction.equals("u")) {
+			swipeObject.put("direction", "up");
+		} else if (direction.equals("l")) {
+			swipeObject.put("direction", "left");
+		} else if (direction.equals("r")) {
+			swipeObject.put("direction", "right");
+		}
+		swipeObject.put("element", ((RemoteWebElement) el).getId());
+		js.executeScript("mobile:swipe", swipeObject);
+
+	}
+
+	public WebElement scrollToElement_iOS(By locator, String direction, int maxScrolls) {
+		WebElement element = null;
+		int scrollCount = 0;
+
+		while (scrollCount < maxScrolls) {
+			try {
+				element = driver.findElement(locator);
+				if (element.isDisplayed()) {
+					return element;
+				}
+			} catch (NoSuchElementException ignored) {
+			}
+			JavascriptExecutor js = (JavascriptExecutor) driver;
+			HashMap<String, Object> scrollObject = new HashMap<>();
+			scrollObject.put("direction", direction.toLowerCase());
+			js.executeScript("mobile: swipe", scrollObject);
+
+			scrollCount++;
+		}
+
+		throw new NoSuchElementException("Element not found after " + maxScrolls + " swipes: " + locator.toString());
+	}
+
+	/******************* Actions methods **********************/
+
+	public void doActionsSendKeys(By locator, String value) {
+		Actions act = new Actions(driver);
+		act.sendKeys(getElement(locator), value).perform();
+	}
+
+	/**
+	 * @param locator
+	 */
+	public void doActionsClick(By locator) {
+		Actions act = new Actions(driver);
+		act.click(getElement(locator)).build().perform();
+	}
+
+	public void doActionsDoubleClick(By locator) {
+		Actions act = new Actions(driver);
+		act.doubleClick(getElement(locator)).build().perform();
+	}
+
+	public void doActionMoveClick(By locator) {
+		Actions act = new Actions(driver);
+		act.moveToElement(getElement(locator)).click().build().perform();
+	}
+
+	public void doActionMoveSendKey(By locator, String value) {
+		Actions act = new Actions(driver);
+		act.moveToElement(getElement(locator)).sendKeys(value).build().perform();
+	}
+
+	public void doActionClear() {
+		Actions act = new Actions(driver);
+		act.keyDown(Keys.CONTROL).sendKeys("a").keyUp(Keys.CONTROL).sendKeys(Keys.BACK_SPACE).build().perform();
+
+	}
+
+	public void doActionEnter() {
+		Actions act = new Actions(driver);
+		act.sendKeys(Keys.ENTER).build().perform();
+
+	}
+
+	public void doMoveToElement(By locator) {
+		Actions act = new Actions(driver);
+		act.moveToElement(getElement(locator)).build().perform();
+
+	}
+
+	public void tapOnElement(By locator, int timeOut) {
+		WebElement element = retryingElement(locator, timeOut);
+		System.out.println("status is " + element);
+
+		Point location = element.getLocation();
+		Dimension size = element.getSize();
+
+		Point centerOfElement = getCenterOfElement(location, size);
+
+		PointerInput finger1 = new PointerInput(PointerInput.Kind.TOUCH, "finger1");
+		Sequence sequence = new Sequence(finger1, 1)
+				.addAction(finger1.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), centerOfElement))
+				.addAction(finger1.createPointerDown(PointerInput.MouseButton.LEFT.asArg()))
+				.addAction(new Pause(finger1, Duration.ofMillis(1000)))
+				.addAction(finger1.createPointerUp(PointerInput.MouseButton.LEFT.asArg()));
+
+		driver.perform(Collections.singletonList(sequence));
+
+	}
+
+}
