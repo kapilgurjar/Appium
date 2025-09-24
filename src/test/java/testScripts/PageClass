@@ -1,0 +1,336 @@
+package com.qa.livebarn.ios.pages;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.Point;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Pause;
+import org.openqa.selenium.interactions.PointerInput;
+import org.openqa.selenium.interactions.Sequence;
+
+import com.qa.livebarn.constants.MobileConstants;
+import com.qa.livebarn.exception.FrameworkException;
+import com.qa.livebarn.factory.DriverFactoryMobile;
+import com.qa.livebarn.utils.ElementUtil;
+import com.qa.livebarn.utils.MobileElementUtil;
+
+import io.appium.java_client.AppiumBy;
+import io.appium.java_client.AppiumDriver;
+import io.qameta.allure.Step;
+
+public class LoginPage {
+
+	protected AppiumDriver driver;
+	private MobileElementUtil eleUtil;
+	private Map<String, By> locators = new HashMap<>();
+	private int timeOut = MobileConstants.getTimeOut();
+	private String platform;
+
+	public LoginPage(AppiumDriver driver) {
+		this.driver = driver;
+		eleUtil = new MobileElementUtil(driver);
+
+		 platform = DriverFactoryMobile.getPlatform().toLowerCase();
+
+		if (platform.equals("ios")) {
+			locators.put("email_TextBox", AppiumBy.accessibilityId("edit_text_email"));
+
+			locators.put("pass_TextBox", AppiumBy.accessibilityId("edit_text_password"));
+
+			locators.put("loginButton", AppiumBy.accessibilityId("button_sign_in"));
+
+			locators.put("updatePass", AppiumBy.accessibilityId("Update Password"));
+			
+			locators.put("favVenue", By.xpath(
+					"//XCUIElementTypeNavigationBar//XCUIElementTypeStaticText|(//android.widget.TextView[@text=\"Favorites\"])[1]"));
+			
+			locators.put("loginScreen", AppiumBy.accessibilityId("text_view_label_sign_in_top"));
+			
+			locators.put("emailErrorTitle", By.xpath(
+					"//XCUIElementTypeButton[@name='ok']//parent::XCUIElementTypeOther//preceding::XCUIElementTypeStaticText[2]"));
+
+			locators.put("emailErrorMessage", By.xpath(
+					"//XCUIElementTypeButton[@name='ok']//parent::XCUIElementTypeOther//preceding::XCUIElementTypeStaticText[1]"));
+
+			locators.put("okButton", AppiumBy.accessibilityId("ok"));
+			
+			locators.put("liveBarnLogo", AppiumBy.accessibilityId("image_view_livebarn_logo"));
+			
+			locators.put("forgotPassword", AppiumBy.accessibilityId("button_forgot_password"));
+			
+			locators.put("browseAllVenues", AppiumBy.accessibilityId("button_browse_all_venues"));
+			
+			locators.put("venueFirstValue", AppiumBy.accessibilityId("venue_name_label"));
+			
+			locators.put("firstRink", AppiumBy.iOSClassChain(
+					"**/XCUIElementTypeWindow[1]/XCUIElementTypeOther[4]/XCUIElementTypeOther[2]/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeTable/XCUIElementTypeCell/XCUIElementTypeOther[1]/XCUIElementTypeOther"));
+			
+			locators.put("search", AppiumBy.accessibilityId("edit_text_search"));
+			
+			locators.put("clearText",
+					By.xpath("//XCUIElementTypeImage[@name=\"magnifyingglass\"]//following::XCUIElementTypeButton[1]"));
+			
+			locators.put("cancelButtonBrowseLivebarn", AppiumBy.accessibilityId("Cancel"));
+			
+			locators.put("filterButton", By.xpath("(//XCUIElementTypeButton[@name=\"image_button_open_filter\"])[2]"));
+			
+			locators.put("showingAllFilterText",
+					By.xpath("(//XCUIElementTypeStaticText[@name=\"text_view_filter_result\"])[2]"));
+			
+			locators.put("ResetButton", AppiumBy.accessibilityId("button_reset_filter"));
+			
+			locators.put("checkMark", By.xpath("//XCUIElementTypeCell//XCUIElementTypeButton[@name=\"checkmark\"]"));
+			
+			locators.put("passWordResetTextBox", AppiumBy.accessibilityId("edit_text_dialog_input"));
+			
+			locators.put("cancelButton", AppiumBy.accessibilityId("cancel"));
+			
+			locators.put("favVenuesList", By.xpath("//XCUIElementTypeCell//XCUIElementTypeStaticText[3]"));
+			
+			locators.put("browseAllVenues", AppiumBy.accessibilityId("button_browse_all_venues"));
+			
+			locators.put("search", AppiumBy.accessibilityId("edit_text_search"));
+			
+			locators.put("venueLogo", AppiumBy.accessibilityId("venue_logo_image"));
+
+			// For Android here
+
+		} else if (platform.equals("android")) {
+			locators.put("email_TextBox", AppiumBy.id("com.livebarn.android.app:id/edit_text_email"));
+			
+			locators.put("pass_TextBox", AppiumBy.id("com.livebarn.android.app:id/edit_text_password"));
+			locators.put("loginButton",AppiumBy.id("com.livebarn.android.app:id/button_sign_in"));
+			locators.put("favVenue", By.xpath("(//android.widget.TextView[@text=\"Favorites\"])[1]"));
+		} else {
+			throw new IllegalArgumentException("Invalid platform: " + platform);
+		}
+	}
+
+	public By getLocator(String key) {
+		if (!locators.containsKey(key)) {
+			throw new FrameworkException("Locator not found for key: " + key);
+		}
+		return locators.get(key);
+	}
+
+	@Step("Login to app and get the venu page title")
+	public String loginToIOSApp(String email, String pass) {
+
+		eleUtil.AcceptAlertIfPresent();
+		eleUtil.doSendKeys(getLocator("email_TextBox"), email);
+		eleUtil.doSendKeys(getLocator("pass_TextBox"), pass);
+		eleUtil.clickWithRetry(getLocator("loginButton"), timeOut);
+		if (eleUtil.isDisplayed(getLocator("updatePass"))) {
+			eleUtil.doClick(getLocator("updatePass"));
+		}
+//	eleUtil.doClick(closeButtonMntText);
+//			
+//		}
+		eleUtil.waitForElementFound(getLocator("favVenue"), timeOut);
+		return eleUtil.doGetAttribute(getLocator("favVenue"), "name", timeOut);
+	}
+
+	@Step("Getting text from the Email text box")
+	public String getEmailTextBoxText() {
+		return eleUtil.doGetAttribute(getLocator("email_TextBox"), "value", timeOut);
+	}
+
+	@Step("Getting text from the Browse All Venues")
+	public String getBrowseAllVenuesText() {
+		return eleUtil.doGetAttribute(getLocator("browseAllVenues"), "label", timeOut);
+	}
+
+	@Step("Getting text from the Password text box")
+	public String getPasswordTextBoxText() {
+		return eleUtil.doGetAttribute(getLocator("pass_TextBox"), "value", timeOut);
+	}
+
+	@Step("Getting text from the Forgot Password text")
+	public String getForgotPasswordLinkText() {
+		return eleUtil.doGetAttribute(getLocator("forgotPassword"), "label", timeOut);
+	}
+
+	@Step("Getting text from the cancel button text")
+	public String getCancelButtonText() {
+		return eleUtil.doGetAttribute(getLocator("cancelButton"), "label", timeOut);
+	}
+
+	@Step("Getting text from the cancel button text")
+	public String getSubmitButtonText() {
+		return eleUtil.doGetAttribute(getLocator("okButton"), "label", timeOut);
+	}
+
+	@Step("Getting text from the login button text")
+	public String getLoginButtonText() {
+		return eleUtil.doGetAttribute(getLocator("loginButton"), "label", timeOut);
+	}
+
+	@Step("if login screen is present then login to application ")
+	public void verifyLoginScreenIsPresent(String email, String pass) {
+
+		eleUtil.sleep(2000);
+		if (eleUtil.isDisplayed(getLocator("loginScreen"))) {
+			eleUtil.AcceptAlertIfPresent();
+			eleUtil.doClear(getLocator("email_TextBox"), timeOut);
+			eleUtil.doSendKeys(getLocator("email_TextBox"), email);
+			eleUtil.doSendKeys(getLocator("pass_TextBox"), pass);
+			eleUtil.clickWithRetry(getLocator("loginButton"), timeOut);
+			if (eleUtil.isDisplayed(getLocator("updatePass"))) {
+				eleUtil.doClick(getLocator("updatePass"));
+			}
+			// eleUtil.waitForElementFound(favVenue, MobileConstants.timeOut);
+
+		} else {
+			System.out.println("login screen is not displayed");
+		}
+	}
+
+	@Step("verify live barn logo")
+	public boolean verifyLiveBarnLogo() {
+		return eleUtil.isDisplayed(getLocator("liveBarnLogo"));
+	}
+
+	@Step("verify live barn title")
+	public String verifyLoginScreenTitle() {
+		return eleUtil.doGetAttribute(getLocator("loginScreen"), "value", timeOut);
+	}
+
+	@Step("Click on login button")
+	public void clickOnLoginButton() {
+		eleUtil.AcceptAlertIfPresent();
+		eleUtil.clickWithRetry(getLocator("loginButton"), timeOut);
+	}
+
+	@Step("Get validation alert title")
+	public String getValidationAlertTitle() {
+		return eleUtil.doGetAttribute(getLocator("emailErrorTitle"), "name", timeOut);
+	}
+
+	@Step("Get validation alert message")
+	public String getValidationAlertMessage() {
+		return eleUtil.doGetAttribute(getLocator("emailErrorMessage"), "name", timeOut);
+	}
+
+	public void enterDataInEmailText(String email) {
+		eleUtil.AcceptAlertIfPresent();
+		eleUtil.doSendKeys(getLocator("email_TextBox"), email);
+	}
+
+	public void enterDataInPasswordTextBox(String pass) {
+		eleUtil.doSendKeys(getLocator("pass_TextBox"), pass);
+	}
+
+	public void clickOnOkButton() {
+		eleUtil.doClick(getLocator("okButton"));
+	}
+
+	public LoginPage clickOnLiveBrowseVenues() {
+		eleUtil.AcceptAlertIfPresent();
+		eleUtil.doClick(getLocator("browseAllVenues"));
+		return this;
+	}
+
+	public LoginPage clickOnBrowseVenuesSearch() {
+		eleUtil.doClick(getLocator("search"));
+		return this;
+	}
+
+	public LoginPage enterDataInSearchTextBox(String venueName) {
+		eleUtil.doSendKeys(getLocator("search"), venueName);
+		driver.switchTo().activeElement().sendKeys(Keys.RETURN);
+		return this;
+	}
+
+	public boolean isVenueLogoPrsentOnUI() {
+		return eleUtil.isDisplayed(getLocator("venueLogo"));
+	}
+
+	public LoginPage clickOnClearTextButton() {
+		eleUtil.doClick(getLocator("clearText"));
+		return this;
+	}
+
+	public LoginPage clickOnCancelButton() {
+		eleUtil.doClick(getLocator("cancelButtonBrowseLivebarn"));
+		return this;
+	}
+
+	// Filter button click with touch action
+	public void clickOnFilterButton() {
+		WebElement element = eleUtil.retryingElement(getLocator("filterButton"), 50);
+		eleUtil.sleep(2000);
+		Point location = element.getLocation();
+		Dimension size = element.getSize();
+		Point centerOfElement = new Point(location.getX() + size.getWidth() / 2,
+				location.getY() + size.getHeight() / 2);
+
+		PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
+		Sequence sequence = new Sequence(finger, 1)
+				.addAction(finger.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), centerOfElement))
+				.addAction(finger.createPointerDown(PointerInput.MouseButton.LEFT.asArg()))
+				.addAction(new Pause(finger, Duration.ofMillis(5000)))
+				.addAction(finger.createPointerUp(PointerInput.MouseButton.LEFT.asArg()));
+
+		driver.perform(Collections.singletonList(sequence));
+	}
+
+	public String getShowingAllFilterText() {
+		return eleUtil.doGetAttribute(getLocator("showingAllFilterText"), "value", timeOut);
+	}
+
+	public int getCheckMarkCount() {
+		return eleUtil.getElements(getLocator("checkMark")).size();
+	}
+
+	public void clickOnResetButton() {
+		eleUtil.clickWhenReady(getLocator("ResetButton"));
+	}
+
+	public void clickOnForgotPasswordLink() {
+		eleUtil.AcceptAlertIfPresent();
+		eleUtil.clickWhenReady(getLocator("forgotPassword"));
+	}
+
+	public void enterEmailInPasswordResetTextBox(String email) {
+		eleUtil.doSendKeys(getLocator("passWordResetTextBox"), email);
+	}
+
+	public LoginPage clickOnFirstVenue() {
+		eleUtil.clickWhenReady(getLocator("venueFirstValue"));
+		return this;
+	}
+
+	public LoginPage clickOnFirstRink() {
+		eleUtil.clickWhenReady(getLocator("firstRink"));
+		return this;
+	}
+
+	public List<String> BrowseLiveBarnVenueList() {
+		eleUtil.waitForElementFound(getLocator("favVenuesList"), 240);
+		List<String> favvenues = new ArrayList<>();
+		ElementUtil.sleep(2000);
+		List<WebElement> eles = eleUtil.getElements(getLocator("favVenuesList"));
+		for (WebElement ele : eles) {
+			String name = ele.getDomAttribute("value");
+			// System.out.println("get all the venues name " + name);
+			favvenues.add(name);
+		}
+		return favvenues;
+	}
+
+	public String getLiveBrowseVenuesScreenTitle() {
+		return eleUtil.doGetAttribute(getLocator("browseAllVenues"), "label", timeOut);
+	}
+
+	public String getSearchTextFieldValue() {
+		return eleUtil.doGetAttribute(getLocator("search"), "value", timeOut);
+	}
+}
